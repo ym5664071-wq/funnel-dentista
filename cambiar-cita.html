@@ -177,7 +177,7 @@
         // 2. Función para mostrar el calendario
         async function main() {
             try {
-                const response = await fetch('http://localhost:3000/api/disponibilidad');
+                const response = await fetch('https://funnel-dentista-ym.onrender.com/api/disponibilidad');
                 if (!response.ok) throw new Error('No se pudo cargar la disponibilidad.');
                 const disponibilidadData = await response.json();
 
@@ -252,7 +252,7 @@
             confirmButton.textContent = 'Procesando...';
 
             try {
-                const response = await fetch('http://localhost:3000/api/confirmar-cambio', {
+                const response = await fetch('https://funnel-dentista-ym.onrender.com/api/confirmar-cambio', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
