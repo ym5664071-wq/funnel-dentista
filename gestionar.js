@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // Este es el endpoint que crearemos en el Paso 2
-            const response = await fetch('https://funnel-dentista-ym.onrender.com/api/solicitar-cambio', {
+            const response = await fetch('https://funnel-dentista.onrender.com/api/solicitar-cambio', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ email: email })
