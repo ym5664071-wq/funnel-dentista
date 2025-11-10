@@ -64,7 +64,7 @@ async function enviarEnlaceModificacion(emailPaciente, token) {
 
     // Construimos el enlace que el usuario usará
     // (cambiar-cita.html es la página que haremos en la Parte 3)
-    const enlace = `http://localhost:3000/cambiar-cita.html?token=${token}`;
+    const enlace = `https://funnel-dentista-ym.onrender.com/cambiar-cita.html?token=${token}`;
 
     // Componer el correo
     const mailOptions = {
