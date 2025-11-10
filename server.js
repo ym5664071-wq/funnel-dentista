@@ -274,8 +274,10 @@ app.post('/api/admin/disponibilidad', checkAdminAuth, (req, res) => {
 });
 // --- FIN DE LA CORRECCIÓN DE ZONA HORARIA ---
 
+// Elige el puerto de Render, o 3000 si estamos en local
+const PORT = process.env.PORT || 3000;
 
-const PORT = 3000;
 app.listen(PORT, () => {
-    console.log(`Servidor API corriendo en http://localhost:${PORT}`);
+    // (Opcional) Hacemos el mensaje más claro
+    console.log(`Servidor API corriendo en el puerto ${PORT}`);
 })
