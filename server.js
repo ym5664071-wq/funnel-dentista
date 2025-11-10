@@ -1,0 +1,280 @@
+// TAREA 1: Leer el archivo .env
+require('dotenv').config();
+
+const express = require('express');
+const mysql = require('mysql');
+const cors = require('cors');
+const jwt = require('jsonwebtoken'); 
+
+// TAREA 3 y 4: Importar AMBAS funciones
+const { enviarConfirmacion, enviarEnlaceModificacion } = require('./notificaciones.js');
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// ARREGLO: Servir archivos estáticos (HTML, CSS, JS)
+app.use(express.static('.'));
+
+// TAREA 1: Usar las variables de entorno
+const db = mysql.createConnection({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_DATABASE
+});
+
+db.connect(err => {
+    if (err) {
+        console.error('Error al conectar a la base de datos:', err);
+        return;
+    }
+    console.log('¡Conexión exitosa a la base de datos MySQL (dentafunnel_db)!');
+});
+
+// Endpoint para mostrar disponibilidad
+app.get('/api/disponibilidad', (req, res) => {
+    const sql = 'SELECT * FROM Disponibilidad WHERE esta_disponible = TRUE';
+    db.query(sql, (err, results) => {
+        if (err) {
+            console.error('Error al consultar la disponibilidad:', err);
+            return res.status(500).json({ message: 'Error interno del servidor.' });
+        }
+        res.json(results);
+    });
+});
+
+
+// --- TAREA: MANEJO DE PACIENTES RECURRENTES ---
+app.post('/api/citas', (req, res) => {
+    // (Tu código de Pacientes Recurrentes va aquí - sin cambios)
+    const { nombre, email, telefono, slot_id } = req.body;
+    if (!nombre || !email || !slot_id) {
+        return res.status(400).json({ message: "Faltan datos." });
+    }
+
+    const sqlCheckSlot = 'SELECT * FROM Disponibilidad WHERE slot_id = ? AND esta_disponible = TRUE';
+    db.query(sqlCheckSlot, [slot_id], (err, slotResults) => {
+        if (err) return res.status(500).json({ message: "Error al verificar horario." });
+        if (slotResults.length === 0) {
+            return res.status(400).json({ message: "Horario no disponible." });
+        }
+        
+        const horario = slotResults[0];
+
+        const crearCitaParaPaciente = (pacienteId) => {
+            const sqlInsertCita = 'INSERT INTO Citas (paciente_id, slot_id) VALUES (?, ?)';
+            db.query(sqlInsertCita, [pacienteId, slot_id], (err, citaResult) => {
+                if (err) return res.status(500).json({ message: "Error al crear la cita." });
+
+                const sqlUpdateSlot = 'UPDATE Disponibilidad SET esta_disponible = FALSE WHERE slot_id = ?';
+                db.query(sqlUpdateSlot, [slot_id], (err, updateResult) => {
+                    if (err) return res.status(500).json({ message: "Error al actualizar horario." });
+
+                    console.log("¡Cita creada y horario actualizado en la BD!");
+                    
+                    const fechaCita = new Date(horario.fecha_hora_inicio);
+                    const detallesParaCorreo = {
+                        servicio: "Valoración completa + Limpieza dental",
+                        fecha: fechaCita.toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+                        hora: fechaCita.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })
+                    };
+                    enviarConfirmacion(email, detallesParaCorreo);
+
+                    res.status(201).json({
+                        message: "Cita creada exitosamente.",
+                        cita: {
+                            nombre: nombre,
+                            fecha_hora_inicio: horario.fecha_hora_inicio
+                        }
+                    });
+                });
+            });
+        };
+
+        const sqlFindPaciente = 'SELECT * FROM Pacientes WHERE email = ?';
+        db.query(sqlFindPaciente, [email], (err, pacienteResults) => {
+            if (err) return res.status(500).json({ message: "Error al buscar paciente." });
+
+            if (pacienteResults.length > 0) {
+                const pacienteExistente = pacienteResults[0];
+                console.log(`Paciente recurrente: ${pacienteExistente.paciente_id}`);
+                crearCitaParaPaciente(pacienteExistente.paciente_id);
+            } else {
+                console.log("Paciente nuevo, creando registro...");
+                const sqlInsertPaciente = 'INSERT INTO Pacientes (nombre_completo, email, telefono) VALUES (?, ?, ?)';
+                db.query(sqlInsertPaciente, [nombre, email, telefono], (err, pacienteResult) => {
+                    if (err) return res.status(500).json({ message: "Error al crear paciente." });
+                    
+                    const nuevoPacienteId = pacienteResult.insertId;
+                    console.log(`Paciente nuevo creado: ${nuevoPacienteId}`);
+                    crearCitaParaPaciente(nuevoPacienteId);
+                });
+            }
+        });
+    });
+});
+// --- FIN TAREA PACIENTES RECURRENTES ---
+
+
+// --- TAREA 4 (Flujo de Modificación de Cita) ---
+app.post('/api/solicitar-cambio', (req, res) => {
+    // (Tu código para solicitar cambio va aquí - sin cambios)
+    const { email } = req.body;
+    if (!email) {
+        return res.status(400).json({ message: "El correo es requerido." });
+    }
+
+    const sqlFindPaciente = "SELECT * FROM Pacientes WHERE email = ?";
+    db.query(sqlFindPaciente, [email], (err, pacientes) => {
+        if (err) return res.status(500).json({ message: "Error de base de datos." });
+        if (pacientes.length === 0) {
+            return res.status(404).json({ message: "No se encontró ninguna cita con ese correo." });
+        }
+        
+        const paciente = pacientes[0];
+
+        const sqlFindCita = `
+            SELECT Citas.cita_id, Citas.slot_id, Disponibilidad.fecha_hora_inicio 
+            FROM Citas 
+            JOIN Disponibilidad ON Citas.slot_id = Disponibilidad.slot_id 
+            WHERE Citas.paciente_id = ? AND Disponibilidad.fecha_hora_inicio > NOW()
+            LIMIT 1;
+        `;
+        
+        db.query(sqlFindCita, [paciente.paciente_id], (err, citas) => {
+            if (err) return res.status(500).json({ message: "Error al buscar la cita." });
+            if (citas.length === 0) {
+                return res.status(404).json({ message: "No tienes citas activas para modificar." });
+            }
+
+            const citaActiva = citas[0];
+
+            const payload = {
+                cita_id: citaActiva.cita_id,
+                slot_id_antiguo: citaActiva.slot_id
+            };
+            
+            const token = jwt.sign(payload, process.env.ADMIN_PASS, { expiresIn: '1h' });
+            
+            enviarEnlaceModificacion(email, token);
+
+            res.status(200).json({ message: "Enlace de modificación enviado a tu correo." });
+        });
+    });
+});
+
+app.post('/api/confirmar-cambio', (req, res) => {
+    // (Tu código para confirmar cambio va aquí - sin cambios)
+    const { token, nuevo_slot_id } = req.body;
+
+    if (!token || !nuevo_slot_id) {
+        return res.status(400).json({ message: "Faltan datos (token o nuevo horario)." });
+    }
+
+    let payload;
+    try {
+        payload = jwt.verify(token, process.env.ADMIN_PASS);
+    } catch (err) {
+        return res.status(401).json({ message: "Enlace no válido o expirado. Vuelve a solicitar el cambio." });
+    }
+
+    const { cita_id, slot_id_antiguo } = payload;
+    
+    db.beginTransaction(err => {
+        if (err) return res.status(500).json({ message: "Error al iniciar la transacción." });
+
+        const sqlLiberarSlot = "UPDATE Disponibilidad SET esta_disponible = TRUE WHERE slot_id = ?";
+        db.query(sqlLiberarSlot, [slot_id_antiguo], (err, result) => {
+            if (err) {
+                return db.rollback(() => res.status(500).json({ message: "Error al liberar horario antiguo." }));
+            }
+
+            const sqlOcuparSlot = "UPDATE Disponibilidad SET esta_disponible = FALSE WHERE slot_id = ?";
+            db.query(sqlOcuparSlot, [nuevo_slot_id], (err, result) => {
+                if (err) {
+                    return db.rollback(() => res.status(500).json({ message: "Error al ocupar nuevo horario." }));
+                }
+                
+                const sqlActualizarCita = "UPDATE Citas SET slot_id = ? WHERE cita_id = ?";
+                db.query(sqlActualizarCita, [nuevo_slot_id, cita_id], (err, result) => {
+                    if (err) {
+                        return db.rollback(() => res.status(500).json({ message: "Error al actualizar la cita." }));
+                    }
+
+                    db.commit(err => {
+                        if (err) {
+                            return db.rollback(() => res.status(500).json({ message: "Error al finalizar la transacción." }));
+                        }
+                        
+                        console.log(`¡Cita ${cita_id} modificada exitosamente!`);
+                        res.status(200).json({ message: "¡Tu cita ha sido modificada con éxito!" });
+                    });
+                });
+            });
+        });
+    });
+});
+// --- FIN TAREA 4 ---
+
+
+// --- TAREA 5 (Panel de Admin) ---
+app.post('/api/admin/login', (req, res) => {
+    // (Tu código de Login de Admin va aquí - sin cambios)
+    const { usuario, password } = req.body;
+    if (usuario === process.env.ADMIN_USER && password === process.env.ADMIN_PASS) {
+        console.log("Acceso de Admin concedido.");
+        res.status(200).json({ message: "Login exitoso" });
+    } else {
+        console.log("Intento de acceso de Admin fallido.");
+        res.status(401).json({ message: "Credenciales incorrectas" });
+    }
+});
+
+const checkAdminAuth = (req, res, next) => {
+    // (Tu código de checkAdminAuth va aquí - sin cambios)
+    const token = req.headers['authorization'];
+    if (token && token === process.env.ADMIN_PASS) {
+        next();
+    } else {
+        res.status(401).json({ message: "Acceso no autorizado" });
+    }
+};
+
+// --- INICIO DE LA CORRECCIÓN DE ZONA HORARIA ---
+app.post('/api/admin/disponibilidad', checkAdminAuth, (req, res) => {
+    const { fecha_hora_inicio } = req.body; // ej: "2025-11-05T10:00"
+
+    if (!fecha_hora_inicio) {
+        return res.status(400).json({ message: "Falta la fecha y hora." });
+    }
+
+    // LÍNEA CORREGIDA:
+    // Convertimos la fecha local (ej: "2025-11-05T10:00") a formato SQL (ej: "2025-11-05 10:00:00")
+    // SIN convertir a UTC.
+    const fechaSQL = fecha_hora_inicio.replace('T', ' ') + ':00';
+    
+    // ANTES (CÓDIGO INCORRECTO):
+    // const fechaSQL = new Date(fecha_hora_inicio).toISOString().slice(0, 19).replace('T', ' ');
+
+    const sql = "INSERT INTO Disponibilidad (fecha_hora_inicio, esta_disponible) VALUES (?, TRUE)";
+    
+    db.query(sql, [fechaSQL], (err, result) => {
+        if (err) {
+            console.error("Error al insertar disponibilidad:", err);
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(400).json({ message: "Error: Ese horario exacto ya existe." });
+            }
+            return res.status(500).json({ message: "Error al guardar en la base de datos." });
+        }
+        console.log(`Nuevo horario añadido: ${fechaSQL}`);
+        res.status(201).json({ message: "Horario añadido exitosamente" });
+    });
+});
+// --- FIN DE LA CORRECCIÓN DE ZONA HORARIA ---
+
+
+const PORT = 3000;
+app.listen(PORT, () => {
+    console.log(`Servidor API corriendo en http://localhost:${PORT}`);
+})

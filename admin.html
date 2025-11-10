@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador</title>
+    
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .admin-panel {
+            background: #ffffff;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 30px 40px;
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            border: 1px solid #e0e0e0;
+        }
+        .admin-panel h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .cta-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            background-color: #db6428; /* Verde para "Añadir" */
+            color: white;
+            border: none;
+        }
+        .cta-button:hover {
+            background-color: #218838;
+        }
+        #logout-btn {
+            background-color: #dc3545; /* Rojo para "Salir" */
+            margin-top: 15px;
+        }
+        #logout-btn:hover {
+            background-color: #c82333;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="admin-panel">
+        <h1>Panel de Administración</h1>
+        
+        <form id="disponibilidad-form">
+            <h3>Añadir Nuevo Horario</h3>
+            <p>Selecciona el día y la hora de inicio del nuevo horario disponible.</p>
+            
+            <div class="form-group">
+                <label for="fecha-hora-input">Fecha y Hora de Inicio:</label>
+                <input type="datetime-local" id="fecha-hora-input" required />
+            </div>
+            
+            <button type="submit" class="cta-button">Añadir Horario</button>
+        </form>
+        
+        <p id="mensaje-feedback"></p>
+
+        <button id="logout-btn" class="cta-button">Cerrar Sesión</button>
+    </div>
+
+    <script>
+        // --- 1. SCRIPT DE SEGURIDAD ---
+        // Obtenemos el "token" (la contraseña) que guardamos en el login
+        const token = localStorage.getItem('admin-token');
+        
+        // Si no hay token, no está logueado. Lo echamos.
+        if (!token) {
+            console.log("Acceso denegado. Redirigiendo a login.");
+            window.location.href = 'admin-login.html';
+        }
+
+        // --- 2. SCRIPT DEL FORMULARIO ---
+        const form = document.getElementById('disponibilidad-form');
+        const inputFecha = document.getElementById('fecha-hora-input');
+        const feedback = document.getElementById('mensaje-feedback');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const fechaHoraInicio = inputFecha.value;
+            if (!fechaHoraInicio) return;
+
+            feedback.textContent = 'Guardando...';
+ 
+            try {
+                // Este es el endpoint que crearemos en el Paso 2cd..
+                
+                const response = await fetch('http://localhost:3000/api/admin/disponibilidad', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        // ¡IMPORTANTE! Enviamos el token para la seguridad
+                        'Authorization': token 
+                    },
+                    body: JSON.stringify({ fecha_hora_inicio: fechaHoraInicio })
+                });
+
+                if (response.ok) {
+                    feedback.style.color = 'green';
+                    feedback.textContent = `¡Horario (${fechaHoraInicio}) añadido con éxito!`;
+                    form.reset();
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Error al guardar.');
+                }
+
+            } catch (error) {
+                feedback.style.color = 'red';
+                feedback.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // --- 3. SCRIPT DE LOGOUT ---
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('admin-token'); // Borramos el token
+            window.location.href = 'admin-login.html'; // Lo mandamos al login
+        });
+
+    </script>
+</body>
+</html>

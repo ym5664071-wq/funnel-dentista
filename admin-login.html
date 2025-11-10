@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - Clínica Dental</title>
+    
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body {
+            /* Usamos un fondo suave para la página */
+            background-color: #f4f7f6;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            /* Centramos todo verticalmente */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Re-usamos tu clase 'confirmation-box' pero con más estilo */
+        .confirmation-box {
+            background: #ffffff;
+            /* Sombra suave para darle profundidad */
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        /* Estilo para el título */
+        .confirmation-box h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 25px;
+        }
+
+        /* Mejoramos el espaciado del formulario */
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        /* Estilos modernos para los inputs */
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box; 
+            font-size: 16px;
+        }
+ 
+        .form-group input:focus {
+            border-color: #ff7300;
+            
+            outline: none;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+        }
+
+        /* Mejoramos tu botón */
+        .cta-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        /* (Asumiendo que .cta-button es azul por tu index) */
+        .cta-button {
+            background-color: #ff7700;
+            color: white;
+            border: none;
+        }
+
+        .cta-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+    </style>
+    </head>
+<body>
+    <div class="confirmation-box">
+        <h1>Acceso de Administrador</h1>
+        
+        <form id="login-form">
+            <div class="form-group">
+                <label for="user-input">Usuario:</label>
+                <input type="text" id="user-input" required />
+            </div>
+            <div class="form-group">
+                <label for="pass-input">Contraseña:</label>
+                <input type="password" id="pass-input" required />
+            </div>
+            <button type="submit" class="cta-button">Entrar</button>
+        </form>
+        
+        <p id="mensaje-feedback" style="margin-top: 20px; color: red;"></p>
+    </div>
+
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const usuario = document.getElementById('user-input').value;
+            const password = document.getElementById('pass-input').value;
+            const feedback = document.getElementById('mensaje-feedback');
+            feedback.textContent = ''; 
+
+            try {
+                const response = await fetch('http://localhost:3000/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, password })
+                });
+
+                if (response.ok) {
+                    localStorage.setItem('admin-token', password);
+                    window.location.href = 'admin.html';
+                } else {
+                    feedback.textContent = 'Error: Usuario o contraseña incorrectos.';
+                }
+            } catch (error) {
+                feedback.textContent = 'Error de conexión con el servidor.';
+            }
+        });
+    </script>
+</body>
+</html>

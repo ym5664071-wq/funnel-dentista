@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clínica Dental - Cambiar Cita</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css">
+
+    <style>
+        body {
+            /* Usamos el fondo suave y la fuente de tu proyecto */
+            background-color: #f4f7f6;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px; /* Añadimos padding para móviles */
+        }
+
+        /* La caja blanca principal */
+        .change-container {
+            max-width: 800px; /* Más ancho para el calendario */
+            margin: 40px auto;
+            padding: 30px 40px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+        
+        /* Títulos */
+        .change-container h1 {
+            text-align: center;
+            color: #333;
+            font-weight: 700;
+            margin-top: 0;
+        }
+
+        /* Párrafos de texto */
+        #loading-text {
+            text-align: center;
+            font-size: 1.1em;
+            color: #555;
+        }
+        
+        /* Contenedor del calendario (de tu index.html) */
+        #booking-component {
+             margin-top: 30px;
+        }
+
+        /* Ocultamos el calendario hasta validar */
+        #booking-component-inner, #confirm-button-container {
+            display: none;
+        }
+        
+        /* Contenedor del botón */
+        #confirm-button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        /* Botón de acción principal (azul) */
+        .cta-button {
+            width: 100%;
+            max-width: 300px; /* No tan ancho */
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+        .cta-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        .cta-button:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Mensajes de Feedback (Verde y Rojo) */
+        #feedback-message {
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 600;
+            padding: 20px;
+            border-radius: 8px;
+            display: none; /* Oculto al inicio */
+            margin-top: 20px;
+        }
+        .success {
+            background-color: #e0f8e9;
+            color: #28a745;
+        }
+        .error {
+            background-color: #f8e0e0;
+            color: #dc3545;
+        }
+    </style>
+    </head>
+<body>
+
+    <div class="change-container">
+        <h1>Modificar Cita</h1>
+        <p id="loading-text">Validando enlace, por favor espera...</p>
+        
+        <div id="feedback-message"></div>
+
+        <div id="booking-component">
+            
+            <div id="booking-component-inner">
+                <p style="text-align: center; font-size: 1.1em; color: #333;">Selecciona tu nuevo horario disponible:</p>
+                <div id="booking-component-grid"> <div class="calendar-container">
+                        <div class="calendar-header">
+                            <button id="prev-month-btn">&lt;</button>
+                            <h4 id="month-year-display"></h4>
+                            <button id="next-month-btn">&gt;</button>
+                        </div>
+                        <div class="calendar-weekdays">
+                            <div>Lu</div> <div>Ma</div> <div>Mi</div> <div>Ju</div> <div>Vi</div> <div>Sá</div> <div>Do</div>
+                        </div>
+                        <div class="calendar-grid" id="calendar-grid"></div>
+                    </div>
+                    <div class="time-slots-container">
+                        <h4>Horarios Disponibles</h4>
+                        <div id="time-slots">
+                            <p>Selecciona un día.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="confirm-button-container">
+            <button id="confirm-change-btn" class="cta-button" disabled>Confirmar Nuevo Horario</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeCalendar } from './calendar.js';
+
+        // --- LÓGICA DE MODIFICACIÓN DE CITA (sin cambios) ---
+
+        const loadingText = document.getElementById('loading-text');
+        const bookingComponentInner = document.getElementById('booking-component-inner');
+        const timeSlotsContainer = document.getElementById('time-slots');
+        const confirmButtonContainer = document.getElementById('confirm-button-container');
+        const confirmButton = document.getElementById('confirm-change-btn');
+        const feedbackMessage = document.getElementById('feedback-message');
+        
+        let selectedSlotId = null;
+        let token = null;
+
+        // 1. Al cargar la página, buscamos el Token en la URL
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            token = params.get('token');
+            
+            if (!token) {
+                showError('Error: Enlace no válido o expirado.');
+                return;
+            }
+            
+            main();
+        });
+
+        // 2. Función para mostrar el calendario
+        async function main() {
+            try {
+                const response = await fetch('http://localhost:3000/api/disponibilidad');
+                if (!response.ok) throw new Error('No se pudo cargar la disponibilidad.');
+                const disponibilidadData = await response.json();
+
+                loadingText.style.display = 'none';
+                bookingComponentInner.style.display = 'block'; 
+
+                initializeCalendar({
+                    calendarGridId: 'calendar-grid',
+                    monthYearDisplayId: 'month-year-display',
+                    prevBtnId: 'prev-month-btn',
+                    nextBtnId: 'next-month-btn',
+                    disponibilidad: disponibilidadData,
+                    onDateSelect: (date) => {
+                        displayTimeSlots(date, disponibilidadData);
+                    }
+                });
+
+            } catch (error) {
+                showError(error.message);
+            }
+        }
+
+        // 3. Función para mostrar los slots
+        function displayTimeSlots(selectedDate, disponibilidadData) {
+            timeSlotsContainer.innerHTML = '<p>Selecciona un día.</p>';
+            selectedSlotId = null;
+            confirmButton.disabled = true;
+            confirmButtonContainer.style.display = 'none';
+
+            if (!selectedDate) return;
+
+            const slotsDelDia = disponibilidadData.filter(slot =>
+                slot.fecha_hora_inicio.startsWith(selectedDate) && slot.esta_disponible
+            );
+
+            if (slotsDelDia.length === 0) {
+                timeSlotsContainer.innerHTML = '<p>No hay horarios disponibles.</p>';
+                return;
+            }
+
+            timeSlotsContainer.innerHTML = '';
+            slotsDelDia.forEach(slot => {
+                const hora = new Date(slot.fecha_hora_inicio).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+                timeSlotsContainer.insertAdjacentHTML('beforeend',
+                    `<button class="time-slot-btn" data-slot-id="${slot.slot_id}">${hora}</button>`
+                );
+            });
+        }
+
+        // 4. Event listener para seleccionar un slot
+        timeSlotsContainer.addEventListener('click', (event) => {
+            if (event.target.classList.contains('time-slot-btn')) {
+                selectedSlotId = event.target.dataset.slotId;
+                
+                const prevSelected = document.querySelector('.selected-time');
+                if (prevSelected) prevSelected.classList.remove('selected-time');
+                event.target.classList.add('selected-time');
+                
+                confirmButtonContainer.style.display = 'block';
+                confirmButton.disabled = false;
+            }
+        });
+
+        // 5. Event listener para el botón de Confirmar
+        confirmButton.addEventListener('click', async () => {
+            if (!selectedSlotId || !token) {
+                showError('Por favor selecciona un nuevo horario.');
+                return;
+            }
+
+            confirmButton.disabled = true;
+            confirmButton.textContent = 'Procesando...';
+
+            try {
+                const response = await fetch('http://localhost:3000/api/confirmar-cambio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        token: token,
+                        nuevo_slot_id: parseInt(selectedSlotId)
+                    })
+                });
+
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message);
+
+                showSuccess(result.message);
+
+            } catch (error) {
+                showError(error.message);
+                confirmButton.disabled = false;
+                confirmButton.textContent = 'Confirmar Nuevo Horario';
+            }
+        });
+
+        // Funciones de ayuda para mostrar mensajes
+        function showError(message) {
+            loadingText.style.display = 'none';
+            bookingComponentInner.style.display = 'none'; 
+            confirmButtonContainer.style.display = 'none'; 
+            
+            feedbackMessage.textContent = message;
+            feedbackMessage.className = 'error';
+            feedbackMessage.style.display = 'block';
+        }
+        
+        function showSuccess(message) {
+            bookingComponentInner.style.display = 'none'; 
+            confirmButtonContainer.style.display = 'none'; 
+            
+            feedbackMessage.textContent = message;
+            feedbackMessage.className = 'success';
+            feedbackMessage.style.display = 'block';
+        }
+
+    </script>
+</body>
+</html>

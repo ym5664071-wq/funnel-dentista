@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Clínica Dental - Agenda tu Cita</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link rel="stylesheet" href="style.css" />
+
+    <style>
+        .change-appointment-box {
+            background-color: #f0f8ff; /* Un fondo azul muy claro */
+            border: 1px solid #bde0ff; /* Un borde sutil */
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 30px; /* Para separarlo del calendario */
+            text-align: center;
+        }
+        .change-appointment-box p {
+            margin: 0;
+            font-size: 15px;
+            color: #333;
+        }
+        .change-appointment-box a {
+            color: #007bff; /* Tu color de acento */
+            font-weight: 600;
+            text-decoration: underline;
+        }
+    </style>
+    </head>
+<body>
+    <header>
+      <nav class="container">
+        <div class="logo">
+          <img src="assets/iconos/logo.png" alt="Clínica Dental Sonrisa Logo" />
+        </div>
+        <div class="contact-phone">Tel: 466-120-0693</div>
+      </nav>
+    </header>
+
+    <main>
+      <section id="hero">
+        <div class="container">
+          <h1>Tu Sonrisa Perfecta Comienza Hoy</h1>
+          <h2>
+            Aprovecha nuestra oferta exclusiva: Valoración completa + Limpieza
+            dental por $500 MXN.
+          </h2>
+          <button class="cta-button" id="cta-hero-btn">
+            Agendar mi Cita con Descuento
+          </button>
+        </div>
+      </section>
+
+      <section id="benefits">
+        <div class="container">
+          <h3>¿Qué obtendrás con tu visita?</h3>
+          <div class="benefits-container">
+            <div class="benefit-card">
+              <h4>Diagnóstico Preciso</h4>
+              <p>
+                Utilizamos tecnología de punta para evaluar tu salud dental y
+                detectar cualquier problema a tiempo.
+              </p>
+            </div>
+            <div class="benefit-card">
+              <h4>Atendido por Especialistas</h4>
+              <p>
+                Nuestro equipo de dentistas certificados te brindará un
+                tratamiento personalizado y de la más alta calidad.
+              </p>
+            </div>
+            <div class="benefit-card">
+              <h4>Prevención de Problemas</h4>
+              <p>
+                Una limpieza profesional previene caries, enfermedades de las
+                encías y mantiene tu sonrisa radiante.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="booking-section" class="container">
+        <h3>Agenda tu Cita</h3>
+        
+        <div class="change-appointment-box">
+          <p>
+            ¿Ya tienes una cita? 
+            <a href="gestionar.html">Corregir o cambiar tu horario aquí</a>
+          </p>
+        </div>
+        <div id="booking-component">
+          <div class="calendar-container">
+            <div class="calendar-header">
+              <button id="prev-month-btn">&lt;</button>
+              <h4 id="month-year-display"></h4>
+              <button id="next-month-btn">&gt;</button>
+            </div>
+            <div class="calendar-weekdays">
+              <div>Lu</div>
+              <div>Ma</div>
+              <div>Mi</div>
+              <div>Ju</div>
+              <div>Vi</div>
+              <div>Sá</div>
+              <div>Do</div>
+            </div>
+            <div class="calendar-grid" id="calendar-grid"></div>
+          </div>
+          <div class="time-slots-container">
+            <h4>Horarios Disponibles</h4>
+            <div id="time-slots">
+              <p>Selecciona un día.</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="user-form" style="display: none">
+          <form id="booking-form">
+            <h4>Ingresa tus datos para confirmar</h4>
+
+            <div class="form-group">
+              <label for="name-input">Nombre Completo:</label>
+              <input
+                type="text"
+                id="name-input"
+                placeholder="Tu nombre completo"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="email-input">Correo Electrónico:</label>
+              <input
+                type="email"
+                id="email-input"
+                placeholder="tucorreo@ejemplo.com"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="phone-input">Teléfono (Opcional):</label>
+              <input
+                type="tel"
+                id="phone-input"
+                placeholder="Tu número de teléfono"
+              />
+            </div>
+
+            <button type="submit" class="cta-button">Confirmar Cita</button>
+          </form>
+        </div>
+      </section>
+
+      <section id="testimonials">
+        <div class="container">
+          <h3>Reseñas de Nuestros Pacientes</h3>
+          <div class="testimonials-container">
+            <div class="testimonial-track">
+              <div class="testimonial-card">
+                <div class="card-header">
+                  <i class="fas fa-user-circle profile-icon"></i>
+                  <div class="name-date">
+                    <strong>Carlos Gutiérrez</strong>
+                    <span>Hace 1 semana</span>
+                  </div>
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+                    alt="Google Logo"
+                    class="google-logo"
+                  />
+                </div>
+                <div class="star-rating">
+                  <i class="fas fa-star"></i><i class="fas fa-star"></i
+                  ><i class="fas fa-star"></i><i class="fas fa-star"></i
+                  ><i class="fas fa-star"></i>
+                </div>
+                <p>
+                  "El trato fue excelente y muy profesional. Resolvieron todas
+                  mis dudas y el resultado fue increíble. ¡Recomendados!"
+                </p>
+              </div>
+
+              <div class="testimonial-card">
+                <div class="card-header">
+                  <i class="fas fa-user-circle profile-icon"></i>
+                  <div class="name-date">
+                    <strong>Laura Méndez</strong>
+                    <span>Hace 3 semanas</span>
+                  </div>
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+                    alt="Google Logo"
+                    class="google-logo"
+                  />
+                </div>
+                <div class="star-rating">
+                  <i class="fas fa-star"></i><i class="fas fa-star"></i
+                  ><i class="fas fa-star"></i><i class="fas fa-star"></i
+                  ><i class="fas fa-star"></i>
+                </div>
+                <p>
+                  "Tenía mucho miedo de ir al dentista, pero el equipo me hizo
+                  sentir en total confianza. El procedimiento fue rápido y sin
+                  dolor."
+                </p>
+              </div>
+
+              <div class="testimonial-card">
+                <div class="card-header">
+                  <i class="fas fa-user-circle profile-icon"></i>
+                  <div class="name-date">
+                    <strong>Javier Rojas</strong>
+                    <span>Hace 1 mes</span>
+                  </div>
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+                    alt="Google Logo"
+                    class="google-logo"
+                  />
+                </div>
+                <div class="star-rating">
+                  <i class="fas fa-star"></i><i class="fas fa-star"></i
+                  ><i class="fas fa-star"></i><i class="fas fa-star"></i
+                  ><i class="far fa-star"></i>
+                </div>
+                <p>
+                  "Las instalaciones son modernas y muy limpias. Se nota la
+                  dedicación en cada detalle. Definitivamente mi nueva clínica."
+                </p>
+              </div>
+
+              <div class="testimonial-card">
+                <div class="card-header">
+                  <i class="fas fa-user-circle profile-icon"></i>
+                  <div class="name-date">
+                    <strong>Ana Pérez</strong>
+                    <span>Hace 2 meses</span>
+                  </div>
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg"
+                    alt="Google Logo"
+                    class="google-logo"
+                  />
+                </div>
+                <div class="star-rating">
+                  <i class="fas fa-star"></i><i class="fas fa-star"></i
+                  ><i class="fas fa-star"></i><i class="fas fa-star"></i
+                  ><i class="fas fa-star"></i>
+                </div>
+                <p>
+                  "Un servicio increíble. Vine por una limpieza y terminaron
+                  ayudándome con un problema que no sabía que tenía. Muy
+                  honestos."
+                </p>
+              </div>
+            </div>
+            <button class="carousel-button prev" id="prev-testimonial">
+              &#10094;
+            </button>
+            <button class="carousel-button next" id="next-testimonial">
+              &#10095;
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section id="final-cta">
+        <div class="container">
+          <h2>¿Listo para transformar tu sonrisa?</h2>
+          <button class="cta-button" id="cta-final-btn">
+            Agendar mi Cita con Descuento
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <p>
+          <strong>Ubicación:</strong> Ignacio Zaragoza 520 A, C.P. 38900,
+          Salvatierra, Guanajuato, México.
+        </p>
+        <p>
+          &copy; 2025 Clínica Dental Sonrisa. Todos los derechos reservados.
+        </p>
+      </div>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

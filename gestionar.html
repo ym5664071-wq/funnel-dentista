@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestionar Cita</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            background-color: #f4f7f6;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .confirmation-box {
+            background: #ffffff;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+        .confirmation-box h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .confirmation-box p {
+            color: #555;
+            margin-bottom: 25px;
+        }
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        .cta-button {
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+        .cta-button:disabled {
+            background-color: #aaa;
+        }
+        #mensaje-feedback {
+            margin-top: 20px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="confirmation-box">
+        <h1>Gestionar mi Cita</h1>
+        <p>
+            Ingresa el correo electrónico que usaste al agendar. Te enviaremos 
+            un enlace seguro para modificar tu cita.
+        </p>
+        
+        <form id="gestionar-form">
+            <div class="form-group">
+                <label for="email-input">Correo Electrónico:</label>
+                <input
+                    type="email"
+                    id="email-input"
+                    placeholder="tucorreo@ejemplo.com"
+                    required
+                />
+            </div>
+            <button type="submit" class="cta-button">Enviar enlace</button>
+        </form>
+        
+        <p id="mensaje-feedback"></p>
+    </div>
+    
+    <script>
+        document.getElementById('gestionar-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const emailInput = document.getElementById('email-input');
+            const feedbackMsg = document.getElementById('mensaje-feedback');
+            const submitButton = e.target.querySelector('.cta-button');
+
+            const email = emailInput.value.trim();
+            if (!email) return;
+
+            submitButton.disabled = true;
+            submitButton.textContent = 'Enviando...';
+            feedbackMsg.textContent = '';
+
+            try {
+                // Este es el endpoint que crearemos en el Paso 2
+                const response = await fetch('http://localhost:3000/api/solicitar-cambio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: email })
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Error al procesar la solicitud.');
+                }
+
+                feedbackMsg.style.color = 'green';
+                feedbackMsg.textContent = '¡Hecho! Revisa tu correo electrónico para ver el enlace de modificación.';
+                emailInput.value = ''; // Limpiar el input
+
+            } catch (error) {
+                feedbackMsg.style.color = 'red';
+                feedbackMsg.textContent = `Error: ${error.message}`;
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Enviar enlace';
+            }
+        });
+    </script>
+</body>
+</html>
