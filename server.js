@@ -26,8 +26,7 @@ const db = mysql.createConnection({
     ssl: {
       rejectUnauthorized: false 
     },
-    // --- ¡ESTA ES LA LÍNEA DE LA SOLUCIÓN! ---
-    dateStrings: true // Fuerza a mysql2 a devolver fechas como strings (ej. "2025-11-10 20:00:00")
+    dateStrings: true 
 });
 
 db.connect(err => {
@@ -40,7 +39,8 @@ db.connect(err => {
 
 // Endpoint para mostrar disponibilidad
 app.get('/api/disponibilidad', (req, res) => {
-    const sql = 'SELECT * FROM Disponibilidad WHERE esta_disponible = TRUE';
+    // CORRECCIÓN: Nombre de tabla en minúscula
+    const sql = 'SELECT * FROM disponibilidad WHERE esta_disponible = TRUE';
     db.query(sql, (err, results) => {
         if (err) {
             console.error('Error al consultar la disponibilidad:', err);
@@ -58,7 +58,8 @@ app.post('/api/citas', (req, res) => {
         return res.status(400).json({ message: "Faltan datos." });
     }
 
-    const sqlCheckSlot = 'SELECT * FROM Disponibilidad WHERE slot_id = ? AND esta_disponible = TRUE';
+    // CORRECCIÓN: Nombre de tabla en minúscula
+    const sqlCheckSlot = 'SELECT * FROM disponibilidad WHERE slot_id = ? AND esta_disponible = TRUE';
     db.query(sqlCheckSlot, [slot_id], (err, slotResults) => {
         if (err) return res.status(500).json({ message: "Error al verificar horario." });
         if (slotResults.length === 0) {
@@ -68,11 +69,13 @@ app.post('/api/citas', (req, res) => {
         const horario = slotResults[0];
 
         const crearCitaParaPaciente = (pacienteId) => {
-            const sqlInsertCita = 'INSERT INTO Citas (paciente_id, slot_id) VALUES (?, ?)';
+            // CORRECCIÓN: Nombre de tabla en minúscula
+            const sqlInsertCita = 'INSERT INTO citas (paciente_id, slot_id) VALUES (?, ?)';
             db.query(sqlInsertCita, [pacienteId, slot_id], (err, citaResult) => {
                 if (err) return res.status(500).json({ message: "Error al crear la cita." });
 
-                const sqlUpdateSlot = 'UPDATE Disponibilidad SET esta_disponible = FALSE WHERE slot_id = ?';
+                // CORRECCIÓN: Nombre de tabla en minúscula
+                const sqlUpdateSlot = 'UPDATE disponibilidad SET esta_disponible = FALSE WHERE slot_id = ?';
                 db.query(sqlUpdateSlot, [slot_id], (err, updateResult) => {
                     if (err) return res.status(500).json({ message: "Error al actualizar horario." });
 
@@ -97,7 +100,8 @@ app.post('/api/citas', (req, res) => {
             });
         };
 
-        const sqlFindPaciente = 'SELECT * FROM Pacientes WHERE email = ?';
+        // CORRECCIÓN: Nombre de tabla en minúscula
+        const sqlFindPaciente = 'SELECT * FROM pacientes WHERE email = ?';
         db.query(sqlFindPaciente, [email], (err, pacienteResults) => {
             if (err) return res.status(500).json({ message: "Error al buscar paciente." });
 
@@ -107,7 +111,8 @@ app.post('/api/citas', (req, res) => {
                 crearCitaParaPaciente(pacienteExistente.paciente_id);
             } else {
                 console.log("Paciente nuevo, creando registro...");
-                const sqlInsertPaciente = 'INSERT INTO Pacientes (nombre_completo, email, telefono) VALUES (?, ?, ?)';
+                // CORRECCIÓN: Nombre de tabla en minúscula
+                const sqlInsertPaciente = 'INSERT INTO pacientes (nombre_completo, email, telefono) VALUES (?, ?, ?)';
                 db.query(sqlInsertPaciente, [nombre, email, telefono], (err, pacienteResult) => {
                     if (err) return res.status(500).json({ message: "Error al crear paciente." });
                     
@@ -129,7 +134,8 @@ app.post('/api/solicitar-cambio', (req, res) => {
         return res.status(400).json({ message: "El correo es requerido." });
     }
 
-    const sqlFindPaciente = "SELECT * FROM Pacientes WHERE email = ?";
+    // CORRECCIÓN: Nombre de tabla en minúscula
+    const sqlFindPaciente = "SELECT * FROM pacientes WHERE email = ?";
     db.query(sqlFindPaciente, [email], (err, pacientes) => {
         if (err) return res.status(500).json({ message: "Error de base de datos." });
         if (pacientes.length === 0) {
@@ -138,11 +144,12 @@ app.post('/api/solicitar-cambio', (req, res) => {
         
         const paciente = pacientes[0];
 
+        // CORRECCIÓN: Nombres de tablas en minúscula
         const sqlFindCita = `
-            SELECT Citas.cita_id, Citas.slot_id, Disponibilidad.fecha_hora_inicio 
-            FROM Citas 
-            JOIN Disponibilidad ON Citas.slot_id = Disponibilidad.slot_id 
-            WHERE Citas.paciente_id = ? AND Disponibilidad.fecha_hora_inicio > NOW()
+            SELECT citas.cita_id, citas.slot_id, disponibilidad.fecha_hora_inicio 
+            FROM citas 
+            JOIN disponibilidad ON citas.slot_id = disponibilidad.slot_id 
+            WHERE citas.paciente_id = ? AND disponibilidad.fecha_hora_inicio > NOW()
             LIMIT 1;
         `;
         
@@ -187,19 +194,22 @@ app.post('/api/confirmar-cambio', (req, res) => {
     db.beginTransaction(err => {
         if (err) return res.status(500).json({ message: "Error al iniciar la transacción." });
 
-        const sqlLiberarSlot = "UPDATE Disponibilidad SET esta_disponible = TRUE WHERE slot_id = ?";
+        // CORRECCIÓN: Nombre de tabla en minúscula
+        const sqlLiberarSlot = "UPDATE disponibilidad SET esta_disponible = TRUE WHERE slot_id = ?";
         db.query(sqlLiberarSlot, [slot_id_antiguo], (err, result) => {
             if (err) {
                 return db.rollback(() => res.status(500).json({ message: "Error al liberar horario antiguo." }));
             }
 
-            const sqlOcuparSlot = "UPDATE Disponibilidad SET esta_disponible = FALSE WHERE slot_id = ?";
+            // CORRECCIÓN: Nombre de tabla en minúscula
+            const sqlOcuparSlot = "UPDATE disponibilidad SET esta_disponible = FALSE WHERE slot_id = ?";
             db.query(sqlOcuparSlot, [nuevo_slot_id], (err, result) => {
                 if (err) {
                     return db.rollback(() => res.status(500).json({ message: "Error al ocupar nuevo horario." }));
                 }
                 
-                const sqlActualizarCita = "UPDATE Citas SET slot_id = ? WHERE cita_id = ?";
+                // CORRECCIÓN: Nombre de tabla en minúscula
+                const sqlActualizarCita = "UPDATE citas SET slot_id = ? WHERE cita_id = ?";
                 db.query(sqlActualizarCita, [nuevo_slot_id, cita_id], (err, result) => {
                     if (err) {
                         return db.rollback(() => res.status(500).json({ message: "Error al actualizar la cita." }));
@@ -250,10 +260,10 @@ app.post('/api/admin/disponibilidad', checkAdminAuth, (req, res) => {
         return res.status(400).json({ message: "Falta la fecha y hora." });
     }
 
-    // CORRECCIÓN: Guarda la fecha local tal cual, sin convertir a UTC
     const fechaSQL = fecha_hora_inicio.replace('T', ' ') + ':00';
     
-    const sql = "INSERT INTO Disponibilidad (fecha_hora_inicio, esta_disponible) VALUES (?, TRUE)";
+    // CORRECCIÓN: Nombre de tabla en minúscula
+    const sql = "INSERT INTO disponibilidad (fecha_hora_inicio, esta_disponible) VALUES (?, TRUE)";
     
     db.query(sql, [fechaSQL], (err, result) => {
         if (err) {
