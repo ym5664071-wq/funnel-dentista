@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const nombrePaciente = encodeURIComponent(result.cita.nombre);
             const fechaCita = encodeURIComponent(result.cita.fecha_hora_inicio);
-            window.location.href = `confirmacion.html?nombre=${nombrePaciente}&fecha=${fechaCita}`;
+            window.location.href = `Confirmacion.html?nombre=${nombrePaciente}&fecha=${fechaCita}`;
 
         } catch (error) {
             console.error(error);
