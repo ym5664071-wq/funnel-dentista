@@ -44,24 +44,28 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // CORREGIDO: Manejo correcto de fechas y horas
         slotsDelDia.forEach(slot => {
-            // --- CORRECCIÓN DE ZONA HORARIA (FRONTEND) ---
-            // 1. Reemplazamos '-' por '/' para forzar la interpretación como hora local.
-            // (Ej: "2025-11-10 20:00:00" -> "2025/11/10 20:00:00")
-            const localDateString = slot.fecha_hora_inicio.replace(/-/g, "/"); 
+            // (Ahora slot.fecha_hora_inicio será un string "2025-11-10 20:00:00")
             
-            const dateObj = new Date(localDateString);
+            // 1. Reemplazamos '-' por '/'
+            const localDateString = slot.fecha_hora_inicio.replace(/-/g, "/"); 
+            // (localDateString será "2025/11/10 20:00:00")
+            
+            const dateObj = new Date(localDateString); // (Esto ahora funcionará)
             
             // 2. Usamos el objeto Date local para obtener la hora
             const hora = dateObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-            // --- FIN DE LA CORRECCIÓN ---
+            // (La hora será "08:00 p. m.")
             
             timeSlotsContainer.insertAdjacentHTML('beforeend',
                 `<button class="time-slot-btn" data-slot-id="${slot.slot_id}">${hora}</button>`
             );
-            
         });
     }
+            
+        
+    
 
     async function handleFormSubmit(event) {
         event.preventDefault();
