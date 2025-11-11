@@ -2,7 +2,7 @@
 require('dotenv').config();
 
 const express = require('express');
-const mysql = require('mysql2'); // Paquete actualizado para autenticación moderna
+const mysql = require('mysql2'); // Paquete actualizado
 const cors = require('cors');
 const jwt = require('jsonwebtoken'); 
 
@@ -17,7 +17,6 @@ app.use(express.json());
 app.use(express.static('.'));
 
 // TAREA 1: Usar las variables de entorno
-// CORRECCIÓN FINAL DE CONEXIÓN (CON SSL Y PUERTO)
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -25,10 +24,10 @@ const db = mysql.createConnection({
     database: process.env.DB_DATABASE,
     port: process.env.DB_PORT,
     ssl: {
-      // Permite que Node confíe en el certificado autofirmado de Railway
       rejectUnauthorized: false 
     },
-    dateStrings: true
+    // --- ¡ESTA ES LA LÍNEA DE LA SOLUCIÓN! ---
+    dateStrings: true // Fuerza a mysql2 a devolver fechas como strings (ej. "2025-11-10 20:00:00")
 });
 
 db.connect(err => {
