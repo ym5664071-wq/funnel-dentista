@@ -43,15 +43,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         slotsDelDia.forEach(slot => {
             // --- CORRECCIÓN DE ZONA HORARIA ---
-            // 1. Reemplazamos '-' por '/' para forzar la interpretación como hora local.
-            const localDateString = slot.fecha_hora_inicio.replace(/-/g, "/"); 
+            // --- LÍNEA A AÑADIR ---
+            console.log("Dato crudo del servidor:", slot.fecha_hora_inicio); 
+           // --- FIN LÍNEA A AÑADIR ---
             
-            const dateObj = new Date(localDateString);
-            
-            // 2. Usamos el objeto Date local para obtener la hora
-            const hora = dateObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
-            // --- FIN DE LA CORRECCIÓN ---
-            
+           // --- INICIO DE LA CORRECCIÓN DE ZONA HORARIA ---
+            // 1. Reemplazamos '-' por '/' para forzar la interpretación como hora local.
+            const localDateString = slot.fecha_hora_inicio.replace(/-/g, "/"); 
+            
+            const dateObj = new Date(localDateString);
+
             timeSlotsContainer.insertAdjacentHTML('beforeend',
                 `<button class="time-slot-btn" data-slot-id="${slot.slot_id}">${hora}</button>`
             );
