@@ -50,6 +50,11 @@ document.addEventListener('DOMContentLoaded', function () {
             
             // 2. Usamos el objeto Date local para obtener la hora
             const hora = dateObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            // --- FIN DE LA CORRECCIÓN ---
+            
+            timeSlotsContainer.insertAdjacentHTML('beforeend',
+                `<button class="time-slot-btn" data-slot-id="${slot.slot_id}">${hora}</button>`
+            );
             
         });
     }
