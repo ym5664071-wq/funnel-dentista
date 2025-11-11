@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- ESTADO DE LA APLICACIÓN ---
     let disponibilidadData = [];
     let selectedSlotId = null;
- 
+    
     // --- FUNCIONES DE LA APP ---
 
     function scrollToBooking(event) {
@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         slotsDelDia.forEach(slot => {
-           // --- INICIO DE LA CORRECCIÓN DE ZONA HORARIA ---
+            // --- CORRECCIÓN DE ZONA HORARIA ---
             // 1. Reemplazamos '-' por '/' para forzar la interpretación como hora local.
             const localDateString = slot.fecha_hora_inicio.replace(/-/g, "/"); 
             
@@ -75,6 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
         submitButton.disabled = true;
 
         try {
+            // URL Pública de Render
             const response = await fetch('https://funnel-dentista.onrender.com/api/citas', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -87,7 +88,6 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!response.ok) throw new Error(result.message || 'Error al crear la cita.');
 
             // --- CÓDIGO CRÍTICO CORREGIDO ---
-            // Redirigimos pasando los datos necesarios en la URL
             const nombrePaciente = encodeURIComponent(result.cita.nombre);
             const fechaCita = encodeURIComponent(result.cita.fecha_hora_inicio);
             window.location.href = `confirmacion.html?nombre=${nombrePaciente}&fecha=${fechaCita}`;
@@ -102,6 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function main() {
         try {
+            // URL Pública de Render
             const response = await fetch('https://funnel-dentista.onrender.com/api/disponibilidad');
             if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
             disponibilidadData = await response.json();
@@ -141,54 +142,54 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- INICIALIZACIÓN DE LA APP ---
     main();
 
-   // --- Lógica del Carrusel de Testimonios (Versión Google Reviews) ---
-const track = document.querySelector('.testimonial-track');
-if (track) {
-    const slides = Array.from(track.children);
-    const nextButton = document.getElementById('next-testimonial');
-    const prevButton = document.getElementById('prev-testimonial');
+    // --- Lógica del Carrusel de Testimonios (Versión Google Reviews) ---
+    const track = document.querySelector('.testimonial-track');
+    if (track) {
+        const slides = Array.from(track.children);
+        const nextButton = document.getElementById('next-testimonial');
+        const prevButton = document.getElementById('prev-testimonial');
 
-    let currentIndex = 0;
+        let currentIndex = 0;
 
-    const moveToSlide = (targetIndex) => {
-        // --- CÓDIGO CRÍTICO MODIFICADO AQUÍ ---
-        // 1. Recalcula el ancho de la tarjeta visible (incluyendo el gap de 20px)
-        const currentSlideWidth = slides.length > 0 ? slides[0].offsetWidth + 20 : 0;
-        
-        // 2. Determina el índice máximo visible (cuántas tarjetas se muestran)
-        let maxIndex;
-        if (window.innerWidth <= 600) {
-            maxIndex = slides.length - 1; // Muestra 1 a la vez
-        } else if (window.innerWidth <= 992) {
-            maxIndex = slides.length - 2; // Muestra 2 a la vez
-        } else {
-            maxIndex = slides.length - 3; // Muestra 3 a la vez
+        const moveToSlide = (targetIndex) => {
+            // --- CÓDIGO CRÍTICO MODIFICADO AQUÍ ---
+            // 1. Recalcula el ancho de la tarjeta visible (incluyendo el gap de 20px)
+            const currentSlideWidth = slides.length > 0 ? slides[0].offsetWidth + 20 : 0;
+            
+            // 2. Determina el índice máximo visible (cuántas tarjetas se muestran)
+            let maxIndex;
+            if (window.innerWidth <= 600) {
+                maxIndex = slides.length - 1; // Muestra 1 a la vez
+            } else if (window.innerWidth <= 992) {
+                maxIndex = slides.length - 2; // Muestra 2 a la vez
+            } else {
+                maxIndex = slides.length - 3; // Muestra 3 a la vez
+            }
+            
+            // 3. Controla los límites
+            if (targetIndex > maxIndex) targetIndex = 0;
+            if (targetIndex < 0) targetIndex = maxIndex;
+
+            // 4. Aplica la transformación con el ancho recién calculado
+            if(track) {
+                track.style.transform = 'translateX(-' + (currentSlideWidth * targetIndex) + 'px)';
+            }
+            currentIndex = targetIndex;
         }
-        
-        // 3. Controla los límites
-        if (targetIndex > maxIndex) targetIndex = 0;
-        if (targetIndex < 0) targetIndex = maxIndex;
 
-        // 4. Aplica la transformación con el ancho recién calculado
-        if(track) {
-            track.style.transform = 'translateX(-' + (currentSlideWidth * targetIndex) + 'px)';
-        }
-        currentIndex = targetIndex;
+        nextButton.addEventListener('click', () => {
+            moveToSlide(currentIndex + 1);
+        });
+
+        prevButton.addEventListener('click', () => {
+            moveToSlide(currentIndex - 1);
+        });
+
+        // Añadir un listener para que el carrusel se reajuste al cambiar el tamaño de la ventana
+        window.addEventListener('resize', () => {
+            moveToSlide(currentIndex); // Reajusta a la posición actual
+        });
+
+        moveToSlide(0);
     }
-
-    nextButton.addEventListener('click', () => {
-        moveToSlide(currentIndex + 1);
-    });
-
-    prevButton.addEventListener('click', () => {
-        moveToSlide(currentIndex - 1);
-    });
-
-    // Añadir un listener para que el carrusel se reajuste al cambiar el tamaño de la ventana
-    window.addEventListener('resize', () => {
-        moveToSlide(currentIndex); // Reajusta a la posición actual
-    });
-
-    moveToSlide(0);
-}
 });
