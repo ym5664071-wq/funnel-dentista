@@ -27,7 +27,8 @@ const db = mysql.createConnection({
     ssl: {
       // Permite que Node confíe en el certificado autofirmado de Railway
       rejectUnauthorized: false 
-    }
+    },
+    dateStrings: true
 });
 
 db.connect(err => {
