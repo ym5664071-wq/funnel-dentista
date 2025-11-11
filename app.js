@@ -75,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
         submitButton.disabled = true;
 
         try {
-            const response = await fetch('https://funnel-dentista.onrender.com/api/citas', {
+            const response = await fetch('/api/citas', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function main() {
         try {
-            const response = await fetch('https://funnel-dentista.onrender.com/api/disponibilidad');
+            const response = await fetch('/api/disponibilidad');
             if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
             disponibilidadData = await response.json();
             
