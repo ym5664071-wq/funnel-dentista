@@ -12,6 +12,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const ctaFinalBtn = document.getElementById('cta-final-btn');
     const bookingSection = document.getElementById('booking-section');
 
+    // URL PÚBLICA DE TU API (Render)
+    const API_URL = 'https://funnel-dentista.onrender.com';
+
     // --- ESTADO DE LA APLICACIÓN ---
     let disponibilidadData = [];
     let selectedSlotId = null;
@@ -42,17 +45,17 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         slotsDelDia.forEach(slot => {
-            // --- CORRECCIÓN DE ZONA HORARIA ---
-            // --- LÍNEA A AÑADIR ---
-            console.log("Dato crudo del servidor:", slot.fecha_hora_inicio); 
-           // --- FIN LÍNEA A AÑADIR ---
+            // --- CORRECCIÓN DE ZONA HORARIA (FRONTEND) ---
+            // 1. Reemplazamos '-' por '/' para forzar la interpretación como hora local.
+            // (Ej: "2025-11-10 20:00:00" -> "2025/11/10 20:00:00")
+            const localDateString = slot.fecha_hora_inicio.replace(/-/g, "/"); 
             
-           // --- INICIO DE LA CORRECCIÓN DE ZONA HORARIA ---
-            // 1. Reemplazamos '-' por '/' para forzar la interpretación como hora local.
-            const localDateString = slot.fecha_hora_inicio.replace(/-/g, "/"); 
-            
-            const dateObj = new Date(localDateString);
-
+            const dateObj = new Date(localDateString);
+            
+            // 2. Usamos el objeto Date local para obtener la hora
+            const hora = dateObj.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            // --- FIN DE LA CORRECCIÓN ---
+            
             timeSlotsContainer.insertAdjacentHTML('beforeend',
                 `<button class="time-slot-btn" data-slot-id="${slot.slot_id}">${hora}</button>`
             );
@@ -76,8 +79,8 @@ document.addEventListener('DOMContentLoaded', function () {
         submitButton.disabled = true;
 
         try {
-            // URL Pública de Render
-            const response = await fetch('https://funnel-dentista.onrender.com/api/citas', {
+            // CORREGIDO: Usar la URL pública
+            const response = await fetch(`${API_URL}/api/citas`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -88,7 +91,6 @@ document.addEventListener('DOMContentLoaded', function () {
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Error al crear la cita.');
 
-            // --- CÓDIGO CRÍTICO CORREGIDO ---
             const nombrePaciente = encodeURIComponent(result.cita.nombre);
             const fechaCita = encodeURIComponent(result.cita.fecha_hora_inicio);
             window.location.href = `confirmacion.html?nombre=${nombrePaciente}&fecha=${fechaCita}`;
@@ -103,8 +105,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function main() {
         try {
-            // URL Pública de Render
-            const response = await fetch('https://funnel-dentista.onrender.com/api/disponibilidad');
+            // CORREGIDO: Usar la URL pública
+            const response = await fetch(`${API_URL}/api/disponibilidad`);
             if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
             disponibilidadData = await response.json();
             
@@ -153,25 +155,20 @@ document.addEventListener('DOMContentLoaded', function () {
         let currentIndex = 0;
 
         const moveToSlide = (targetIndex) => {
-            // --- CÓDIGO CRÍTICO MODIFICADO AQUÍ ---
-            // 1. Recalcula el ancho de la tarjeta visible (incluyendo el gap de 20px)
             const currentSlideWidth = slides.length > 0 ? slides[0].offsetWidth + 20 : 0;
             
-            // 2. Determina el índice máximo visible (cuántas tarjetas se muestran)
             let maxIndex;
             if (window.innerWidth <= 600) {
-                maxIndex = slides.length - 1; // Muestra 1 a la vez
+                maxIndex = slides.length - 1; 
             } else if (window.innerWidth <= 992) {
-                maxIndex = slides.length - 2; // Muestra 2 a la vez
+                maxIndex = slides.length - 2; 
             } else {
-                maxIndex = slides.length - 3; // Muestra 3 a la vez
+                maxIndex = slides.length - 3; 
             }
             
-            // 3. Controla los límites
             if (targetIndex > maxIndex) targetIndex = 0;
             if (targetIndex < 0) targetIndex = maxIndex;
 
-            // 4. Aplica la transformación con el ancho recién calculado
             if(track) {
                 track.style.transform = 'translateX(-' + (currentSlideWidth * targetIndex) + 'px)';
             }
@@ -186,9 +183,8 @@ document.addEventListener('DOMContentLoaded', function () {
             moveToSlide(currentIndex - 1);
         });
 
-        // Añadir un listener para que el carrusel se reajuste al cambiar el tamaño de la ventana
         window.addEventListener('resize', () => {
-            moveToSlide(currentIndex); // Reajusta a la posición actual
+            moveToSlide(currentIndex); 
         });
 
         moveToSlide(0);

@@ -17,6 +17,7 @@ app.use(express.json());
 app.use(express.static('.'));
 
 // TAREA 1: Usar las variables de entorno
+// CORRECCIÓN FINAL DE CONEXIÓN (CON SSL Y PUERTO)
 const db = mysql.createConnection({
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
@@ -24,7 +25,7 @@ const db = mysql.createConnection({
     database: process.env.DB_DATABASE,
     port: process.env.DB_PORT,
     ssl: {
-      // SOLUCIÓN FINAL: Permite que Node confíe en el certificado autofirmado de Railway
+      // Permite que Node confíe en el certificado autofirmado de Railway
       rejectUnauthorized: false 
     }
 });
@@ -241,15 +242,15 @@ const checkAdminAuth = (req, res, next) => {
     }
 };
 
-// --- INICIO DE LA CORRECCIÓN DE ZONA HORARIA ---
+// CORRECCIÓN DE ZONA HORARIA
 app.post('/api/admin/disponibilidad', checkAdminAuth, (req, res) => {
-    const { fecha_hora_inicio } = req.body; // ej: "2025-11-05T10:00"
+    const { fecha_hora_inicio } = req.body; 
 
     if (!fecha_hora_inicio) {
         return res.status(400).json({ message: "Falta la fecha y hora." });
     }
 
-    // CORRECCIÓN: Convertimos la fecha local a formato SQL sin conversión UTC
+    // CORRECCIÓN: Guarda la fecha local tal cual, sin convertir a UTC
     const fechaSQL = fecha_hora_inicio.replace('T', ' ') + ':00';
     
     const sql = "INSERT INTO Disponibilidad (fecha_hora_inicio, esta_disponible) VALUES (?, TRUE)";
@@ -266,12 +267,11 @@ app.post('/api/admin/disponibilidad', checkAdminAuth, (req, res) => {
         res.status(201).json({ message: "Horario añadido exitosamente" });
     });
 });
-// --- FIN DE LA CORRECCIÓN DE ZONA HORARIA ---
+// --- FIN TAREA 5 ---
 
 // Elige el puerto de Render, o 3000 si estamos en local
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    // (Opcional) Hacemos el mensaje más claro
     console.log(`Servidor API corriendo en el puerto ${PORT}`);
 })
