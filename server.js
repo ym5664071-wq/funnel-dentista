@@ -257,7 +257,6 @@ app.post('/api/admin/disponibilidad', checkAdminAuth, (req, res) => {
     // Convertimos la fecha local (ej: "2025-11-05T10:00") a formato SQL (ej: "2025-11-05 10:00:00")
     // SIN convertir a UTC.
     const fechaSQL = fecha_hora_inicio.replace('T', ' ') + ':00';
-    
     // ANTES (CÓDIGO INCORRECTO):
     // const fechaSQL = new Date(fecha_hora_inicio).toISOString().slice(0, 19).replace('T', ' ');
 
